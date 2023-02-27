@@ -44,9 +44,9 @@ def PrepareOcsvmTestData(directory, output_path):
                 # c_ 
                 print("combine points")
             
-                combined_source_ids = np.concatenate((np.zeros((len(file1.points),),dtype=int), np.ones(len((file2.points),), dtype=int)))
+                combined_source_ids = np.concatenate((np.ones((len(file1.points),),dtype=int), np.full(len((file2.points),),-1, dtype=int)))
                 combined_full = np.c_[combined_points,combined_source_ids]
-                np.save(output_path+os.path.basename(file1_path),combined_full)
+                np.save(output_path+os.path.basename(file1_path),combined_source_ids)
                 # output_file = laspy.create(point_format=file1.header.point_format)
                 # # write numpy array data back to .las
                 # output_file.x = combined_points[:,0]

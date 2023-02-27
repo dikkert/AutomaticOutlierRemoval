@@ -125,8 +125,9 @@ class preprocessing:
     def ocsvmpredict(self,dir_path):
         self.pathnames = []
         for filename in os.listdir(dir_path):
-            path = os.path.join(dir_path,filename)
-            self.pathnames.append(path)
+            if filename.endswith((".laz",",.las")) and not filename.endswith(("_outliers.laz", "outliers.las")):
+                path = os.path.join(dir_path,filename)
+                self.pathnames.append(path)
     
         # iterate over the point clouds and return an 
         for pathname in self.pathnames:
@@ -151,14 +152,14 @@ class preprocessing:
            # load features on a numpy array
             self.features = np.c_[X,Y,Z,R,G,B,Intensity]
             outcome = self.ocsvm.predict(self.features)
-            outcome_file = np.c_[self.all_files,outcome]
-            np.save(output_path+os.path.basename(pathname),outcome_file)
+            outcome_file = np.c_[self.features,outcome]
+            np.save(dir_path+os.path.basename(pathname),outcome_file)
             print(outcome_file.shape)
         return outcome_file
-preprocessing = preprocessing()
-preprocessing.extract_pc("D:/beneluxtunnel/diensttunnels/BET_NB_GZ_0/output/")
-preprocessing.ocsvmtrainer()
-preprocessing.extract_pc("D:/beneluxtunnel/diensttunnels/BET_NB_GZ_0/test")
-preprocessing.ocsvmpredict()
+#preprocessing = preprocessing()
+#preprocessing.extract_pc("D:/beneluxtunnel/diensttunnels/BET_NB_GZ_0/output/")
+#preprocessing.ocsvmtrainer()
+#preprocessing.extract_pc("D:/beneluxtunnel/diensttunnels/BET_NB_GZ_0/test")
+#preprocessing.ocsvmpredict()
 
 
