@@ -1,8 +1,9 @@
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, ConfusionMatrixDisplay, fbeta_score
 import numpy as np
 import os
 from statistics import mean
 import matplotlib.pyplot as plt
+import csv
 
 def testAccuracy(input_path,input_path2):
     error_files = []
@@ -40,22 +41,32 @@ def testAccuracy(input_path,input_path2):
                     error_files.append(file1_path)
                 ### analysis part of function
                 else: 
+                    results = []
                     # get accuracy score
                     acc = accuracy_score(train,test)
+                    f_score = fbeta_score(train, test, beta=0.5)
+                    npv = precision_score(train, test, pos_label=0)
+                    tnr = recall_score(train, test, pos_label=0)
+                    #tn, fp, fn, tp = confusion_matrix(train,test).ravel()
                     print("accuracy score is "+str(acc))
-                    total_acc.append(acc)
+                    results.append([os.path.basename(file1_path),acc,f_score,npv,tnr])#,tn, fp, fn, tp])
+                                    
                     # make a confusion matrix
-                    cm = confusion_matrix(train,test, normalize="all")
+                    cm = confusion_matrix(train,test)
                     np.add(total_cm,cm)
                     print(cm)
+    # make a csv file
+    output_file = "evaluation_results_just_density.csv"
+    with open(output_file, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["Filename", "Accuracy", "F0.5 Score", "Negative Predictive Value", "True Negative Rate","true negatives","false positives","false negatives","true positives"])
+        writer.writerows(results)
     # make a plot of the total confusion matrix                 
-    disp = ConfusionMatrixDisplay(total_cm)
-    disp.plot()
-    plt.show()
-    return mean(total_acc), error_files, variation
+   
+    return  error_files, variation
         
 
-testAccuracy("D:/OCSVM/test/numpy/all_geom_features","D:/OCSVM/validation(in+out)/numpy")
+testAccuracy("D:/OCSVM/with_geometric_features/test/numpy","D:/OCSVM/without_geometric_features/validation(in+out)/numpy")
 
 import pandas as pd
 model = np.load("D:/OCSVM/test/numpy/BET_NB_GN_0-049.npy")
@@ -87,4 +98,4 @@ inpoint = len(inlier.points)
 outpoints = len(outlier.points)
 fullpoints = len(full.points)
 
- 
+  
