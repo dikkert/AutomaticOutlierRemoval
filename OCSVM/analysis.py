@@ -12,6 +12,7 @@ def testAccuracy(input_path,input_path2):
     total_cm = np.empty((2,2))
     i = 0
     variation = []
+    results = []
      # create lists of input paths
     npy_files = [os.path.join(input_path, f) for f in os.listdir(input_path) if f.endswith(".npy")]
     npy_files2 = [os.path.join(input_path2, f) for f in os.listdir(input_path2) if f.endswith(".npy")]
@@ -34,40 +35,61 @@ def testAccuracy(input_path,input_path2):
                     variation.append(file1_path)
                 # open test file    
                 test = np.load(file2_path).astype(int)
-                test = test
                 print("loading testing file")
                 # control structure to check for files with a different length 
                 if train.shape[0] != test.shape[0]:
                     error_files.append(file1_path)
                 ### analysis part of function
-                else: 
-                    results = []
+                else:
+                    tp = 9999
+                    fp = 9999
+                    tn = 9999
+                    fn = 9999
+                    
                     # get accuracy score
                     acc = accuracy_score(train,test)
-                    f_score = fbeta_score(train, test, beta=0.5)
-                    npv = precision_score(train, test, pos_label=0)
-                    tnr = recall_score(train, test, pos_label=0)
-                    #tn, fp, fn, tp = confusion_matrix(train,test).ravel()
-                    print("accuracy score is "+str(acc))
-                    results.append([os.path.basename(file1_path),acc,f_score,npv,tnr])#,tn, fp, fn, tp])
-                                    
-                    # make a confusion matrix
+                    #npv = precision_score(train, test, pos_label=0)
+                    #tnr = recall_score(train, test, pos_label=0)
                     cm = confusion_matrix(train,test)
-                    np.add(total_cm,cm)
-                    print(cm)
+                    try:
+                        tp = cm[1][1]
+                        fp = cm[0][1]
+                        tn = cm[0][0]
+                        fn = cm[1][0]
+                        f_score = fbeta_score(train, test, beta=0.5)
+                        results.append([os.path.basename(file1_path),acc,f_score,tn, fp, fn, tp])
+                    except:
+                        results.append([os.path.basename(file1_path),acc])
+                        pass
+                    
+                    print("accuracy score is "+str(acc))
+                    total_acc.append(acc)
+                    
     # make a csv file
-    output_file = "evaluation_results_just_density.csv"
+    output_file = "evaluation_results_canupo.csv"
     with open(output_file, 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["Filename", "Accuracy", "F0.5 Score", "Negative Predictive Value", "True Negative Rate","true negatives","false positives","false negatives","true positives"])
+        writer.writerow(["Filename", "Accuracy", "F0.5 Score","true negatives","false positives","false negatives","true positives"])
         writer.writerows(results)
     # make a plot of the total confusion matrix                 
-   
-    return  error_files, variation
-        
+    avg_acc = sum(total_acc) / len(total_acc)
+    return  error_files, variation, avg_acc
 
-testAccuracy("D:/OCSVM/with_geometric_features/test/numpy","D:/OCSVM/without_geometric_features/validation(in+out)/numpy")
 
+testAccuracy("D:/OCSVM/canupo/","D:/OCSVM/without_geometric_features/validation(in+out)/numpy/")
+
+
+train = np.load("D:/OCSVM/canupo/BET_NB_0-030_outliers.npy")
+test = np.load("D:/OCSVM/without_geometric_features/validation(in+out)/numpy/BET_NB_GN_0-030_outliers.npy")
+train.shape[0] == test.shape[0]
+acc = accuracy_score(train,test)
+confusionmatrix = confusion_matrix(test, train)
+print(confusionmatrix)
+print(acc)
+
+outliers = laspy.read("D:/OCSVM/without_geometric_features/validation(in+out))
+outliers = laspy.read("D:\OCSVM\Canupo\BET_NB_GN_0-030.laz")
+print(len(outliers.points[outliers["CANUPO.class"] == 3.0]))
 import pandas as pd
 model = np.load("D:/OCSVM/test/numpy/BET_NB_GN_0-049.npy")
 np.all(model == 1)
@@ -99,3 +121,12 @@ outpoints = len(outlier.points)
 fullpoints = len(full.points)
 
   
+train= [0,1,0,0,0,1]
+  
+test= [0,0,1,0,1,1]
+ 
+cm = confusion_matrix(train, test)
+print(cm)
+fp = cm[1][1]
+fn = cm[1][0]
+

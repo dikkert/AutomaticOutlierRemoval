@@ -6,46 +6,7 @@ import math
 import laspy
 
 import os
-#open file and extract x,y,z
-input_path = "D:/OCSVM/train/Buis_D/BET-D-149.laz"
-file = laspy.read("D:/OCSVM/train/Buis_D/BET-D-149.laz")
-x = np.array(file.x)
-y = np.array(file.y)
-z = np.array(file.z)
-points = np.c_[x,y,z]
-print(len(file.points))
-# create empty list of density values
-densitylist = []
 
-# read xyz in o3d format
-pcd = o3d.geometry.PointCloud()
-pcd.points = o3d.utility.Vector3dVector(points)
-# build KDTree
-pcd_tree = o3d.geometry.KDTreeFlann(pcd)
-# set distance
-distance = 0.2
-# iterate over points in point cloud, returning an index list of nearby points
-for i, _ in enumerate(pcd.points):
-    [k, idx, _] = pcd_tree.search_radius_vector_3d(pcd.points[i], distance)
-    # calculate density using the amount of points
-    density = len(idx) / ((4/3)*math.pi*distance**3) 
-    densitylist.append(density)
-# transform list to numpy array    
-densityarray = np.asarray(densitylist)
-print(densityarray[:100])
-print(len(file.points))
-print(len(densityarray))
-# compute other geometric features
-features = compute_features(points,distance,max_k_neighbors=50000,feature_names=FEATURE_NAMES)
-print(len(features))
-print(FEATURE_NAMES)
-FEATURE_NAMES_2 = list(FEATURE_NAMES)+["density"]
-print(FEATURE_NAMES_2)
-features_and_density = np.c_[features,densityarray]
-print(features_and_density[1])
-
-output_path = "D:/OCSVM/train/BET_OB_GZ_0/BET_OB_GZ_0-020_features_1.laz"
-las_utils.write_with_extra_dims(input_path, output_path,features_and_density,FEATURE_NAMES_2)
 
 def compute_all_features(directory,output_dir):
     pathnames = []
@@ -91,7 +52,7 @@ def compute_all_features(directory,output_dir):
             [k, idx, _] = pcd_tree.search_radius_vector_3d(pcd.points[i], distance)
             
             # calculate density using the amount of points
-            density = len(idx) / ((4/3)*math.pi*distance**3) 
+            density = len(idx)
             densitylist.append(density)
             if i % 100000 == 0:
                 print("point"+str(i))
@@ -117,7 +78,7 @@ def compute_all_features(directory,output_dir):
        
         new_file = laspy.create(point_format=file.header.point_format,file_version=file.header.version)
         new_file.points = file.points
-        new_file.point_source_id = densityarray
+        new_file["number_of_neighbors"] = densityarray
         #new_file.density= densityarray()
         # save lasfile to specified directory using the input name
         new_file.write(output_path)
@@ -125,6 +86,3 @@ def compute_all_features(directory,output_dir):
         
         
 compute_all_features("D:/OCSVM/without_geometric_features/test","D:/OCSVM/with_geometric_features/test")
-
-for i, name in enumerate(["density"]):
-    print(i)
